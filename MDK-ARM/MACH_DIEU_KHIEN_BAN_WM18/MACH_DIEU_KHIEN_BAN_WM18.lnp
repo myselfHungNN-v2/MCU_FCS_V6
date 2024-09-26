@@ -1,0 +1,27 @@
+--cpu Cortex-M3
+"mach_dieu_khien_ban_wm18\startup_stm32f103xb.o"
+"mach_dieu_khien_ban_wm18\main.o"
+"mach_dieu_khien_ban_wm18\stm32f1xx_it.o"
+"mach_dieu_khien_ban_wm18\stm32f1xx_hal_msp.o"
+"mach_dieu_khien_ban_wm18\stm32f1xx_hal_gpio_ex.o"
+"mach_dieu_khien_ban_wm18\stm32f1xx_hal_adc.o"
+"mach_dieu_khien_ban_wm18\stm32f1xx_hal_adc_ex.o"
+"mach_dieu_khien_ban_wm18\stm32f1xx_hal.o"
+"mach_dieu_khien_ban_wm18\stm32f1xx_hal_rcc.o"
+"mach_dieu_khien_ban_wm18\stm32f1xx_hal_rcc_ex.o"
+"mach_dieu_khien_ban_wm18\stm32f1xx_hal_gpio.o"
+"mach_dieu_khien_ban_wm18\stm32f1xx_hal_dma.o"
+"mach_dieu_khien_ban_wm18\stm32f1xx_hal_cortex.o"
+"mach_dieu_khien_ban_wm18\stm32f1xx_hal_pwr.o"
+"mach_dieu_khien_ban_wm18\stm32f1xx_hal_flash.o"
+"mach_dieu_khien_ban_wm18\stm32f1xx_hal_flash_ex.o"
+"mach_dieu_khien_ban_wm18\stm32f1xx_hal_exti.o"
+"mach_dieu_khien_ban_wm18\stm32f1xx_hal_can.o"
+"mach_dieu_khien_ban_wm18\stm32f1xx_hal_tim.o"
+"mach_dieu_khien_ban_wm18\stm32f1xx_hal_tim_ex.o"
+"mach_dieu_khien_ban_wm18\stm32f1xx_hal_uart.o"
+"mach_dieu_khien_ban_wm18\system_stm32f1xx.o"
+--strict --scatter "MACH_DIEU_KHIEN_BAN_WM18\MACH_DIEU_KHIEN_BAN_WM18.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "MACH_DIEU_KHIEN_BAN_WM18.map" -o MACH_DIEU_KHIEN_BAN_WM18\MACH_DIEU_KHIEN_BAN_WM18.axf
