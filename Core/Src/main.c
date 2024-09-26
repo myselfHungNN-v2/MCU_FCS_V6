@@ -26,11 +26,14 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+typedef enum {IDLE,State_1,State_2} State_Machine;
 
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define ENABLE_Fire_PIN  HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+#define DISABLE_Fire_PIN HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
 
 /* USER CODE END PD */
 
@@ -45,7 +48,7 @@ uint8_t Tx_Flag;
 uint8_t Tx_Buff[10];
 // ====== ADC ====== //
 uint16_t ADC_Out[3];
-uint8_t A,B,C,D;
+GPIO_PinState A,B,C,D;
 uint8_t Sig_ADC_Vol;
 // ====== Sensor ======//
 
@@ -54,22 +57,23 @@ uint8_t Sig_ADC_Vol;
 //uint8_t S2_Sensor ;
 //uint8_t S3_Sensor ;
 //uint8_t Sensor[4];
-uint8_t Sig_Sensor[16];
 
+uint8_t Sig_Sensor[16];
 uint8_t Sensor_16;
 uint8_t Sensor_17;
 //
-uint8_t A0_Button_1;
-uint8_t A1_Button_1;
-uint8_t A2_Button_1;
-uint8_t E0_Button_1;
+GPIO_PinState A0_Button_1;
+GPIO_PinState A1_Button_1;
+GPIO_PinState A2_Button_1;
+GPIO_PinState E0_Button_1;
 
 uint8_t A18 =0x00,A1=0x00,A2=0x00,A3=0x00,A4=0x00,A5=0x00,A6=0x00,A7=0x00,A8=0,A9=0,A10=0,A11=0,A12=0,A13=0,A14=0,A15=0,A16=0,A17=0;
 uint8_t A01 =0x00, A02=0x00, A03=0x00, A04=0x00, A05=0x00, A06=0x00, A07=0x00, A08=0x00, A09=0x00, A010=0x00, A011=0x00, A012=0x00, A013=0x00, A014=0x00, A015=0x00, A016=0x00, A017=0x00, A018=0x00;
-uint8_t A0_Button_2;
-uint8_t A1_Button_2;
-uint8_t A2_Button_2;
-uint8_t E0_Button_2;
+
+GPIO_PinState A0_Button_2;
+GPIO_PinState A1_Button_2;
+GPIO_PinState A2_Button_2;
+GPIO_PinState E0_Button_2;
 
 uint8_t Button_8;
 uint8_t Button_9;
@@ -78,14 +82,15 @@ uint8_t Allow_F;
 uint8_t Allow_F_Fire;
 uint8_t Mode_F;
 uint8_t Mode_F_Fire;
-uint8_t F_A,F_B,F_C,F_D;
+GPIO_PinState F_A,F_B,F_C,F_D;
 uint16_t Read_Timer;
 uint16_t Count;
-typedef enum {IDLE,State_1,State_2} State_Machine;
+
 State_Machine State = IDLE;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+/* USER CODE BEGIN PV */
 ADC_HandleTypeDef hadc1;
 DMA_HandleTypeDef hdma_adc1;
 
@@ -95,9 +100,6 @@ TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 
 UART_HandleTypeDef huart1;
-
-/* USER CODE BEGIN PV */
-
 
 /* USER CODE END PV */
 
@@ -111,7 +113,7 @@ static void MX_USART1_UART_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
-void Ana_ADC(uint8_t A, uint8_t B, uint8_t C, uint8_t D);
+void Ana_ADC(GPIO_PinState A, GPIO_PinState B, GPIO_PinState C, GPIO_PinState D);
 void Handle_ADC(void);
 
 void Systick_Delay(unsigned int x);
@@ -119,7 +121,7 @@ void Handle_Button(void);
 
 void Allow_Fire(void);
 void Mode_Fire(void);
-void Ana_Button_Fire(uint8_t F_A, uint8_t F_B, uint8_t F_C, uint8_t F_D);
+void Ana_Button_Fire(GPIO_PinState F_A, GPIO_PinState F_B, GPIO_PinState F_C, GPIO_PinState F_D);
 
 void Trans_Fire(void);
 
@@ -128,267 +130,231 @@ void Handle_Led(uint8_t X_Led);
 void Delay_Timer_1s(void);
 void Delay_Timer_Ms(uint32_t x);
 void Ana_Sensor(void);
-void Handle_Sensor(uint8_t S0,uint8_t S1,uint8_t S2,uint8_t S3);
+void Handle_Sensor(GPIO_PinState S0,GPIO_PinState S1,GPIO_PinState S2,GPIO_PinState S3);
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-	//1ms
- if(htim -> Instance == htim1.Instance)
- {
-	// if(Allow_F_Fire == 1)
-	 {
-		 
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){	//1ms
+ if(htim -> Instance == htim1.Instance){
+	// if(Allow_F_Fire == 1)		 
 			Count++;
-	 }
  }
 }
 
-void Systick_Delay(unsigned int x)
-{
+void Systick_Delay(unsigned int x){
 	SysTick -> LOAD = 8000000/1000*x;
 	SysTick -> VAL = 0;
 	SysTick -> CTRL =5;
-	while((SysTick->CTRL & 1 <<16) == 0);
-	
+	while((SysTick->CTRL & 1 <<16) == 0);	
 }
-void Delay_Timer_1s(void)
-{
+
+void Delay_Timer_1s(void){
 	__HAL_TIM_SetCounter(&htim1,0);
 	if(Count == 260)
 	Read_Timer = __HAL_TIM_GetCounter(&htim1);
-//	while (__HAL_TIM_GetCounter(&htim1) < 1000)
-	//{}
-		
-	
+//	while (__HAL_TIM_GetCounter(&htim1) < 1000)	
 }
-void Delay_Timer_Ms(uint32_t x)
-{
-	while (x)
-	{
+
+void Delay_Timer_Ms(uint32_t x){
+	while (x){
 		Delay_Timer_1s();
 		--x;
 	}
 }
-void Ana_ADC(uint8_t A, uint8_t B, uint8_t C, uint8_t D)
-{
-		HAL_GPIO_WritePin(S0_ADC_GPIO_Port,S0_ADC_Pin,A);
-		HAL_GPIO_WritePin(S1_ADC_GPIO_Port,S1_ADC_Pin,B);
-		HAL_GPIO_WritePin(S2_ADC_GPIO_Port,S2_ADC_Pin,C);
-		HAL_GPIO_WritePin(S3_ADC_GPIO_Port,S3_ADC_Pin,D);
-Sig_ADC_Vol = HAL_GPIO_ReadPin(Sig_ADC_Vol_GPIO_Port,Sig_ADC_Vol_Pin);
+void Ana_ADC(GPIO_PinState A, GPIO_PinState B, GPIO_PinState C, GPIO_PinState D){
+	HAL_GPIO_WritePin(S0_ADC_GPIO_Port,S0_ADC_Pin,A);
+	HAL_GPIO_WritePin(S1_ADC_GPIO_Port,S1_ADC_Pin,B);
+	HAL_GPIO_WritePin(S2_ADC_GPIO_Port,S2_ADC_Pin,C);
+	HAL_GPIO_WritePin(S3_ADC_GPIO_Port,S3_ADC_Pin,D);
+	Sig_ADC_Vol = HAL_GPIO_ReadPin(Sig_ADC_Vol_GPIO_Port,Sig_ADC_Vol_Pin);
 }
 
-void Handle_ADC(void)
-{
+void Handle_ADC(void){
 		
 }
 //====== Doc tin hieu Nut Nhan ======//
-void Handle_Button(void)
-	{
-		HAL_GPIO_WritePin(E1_1_GPIO_Port,E1_1_Pin,GPIO_PIN_RESET);
-		E0_Button_1 = HAL_GPIO_ReadPin(E0_Button_1_GPIO_Port,E0_Button_1_Pin);
-		HAL_GPIO_WritePin(E1_2_GPIO_Port,E1_2_Pin,GPIO_PIN_RESET);
-		E0_Button_2 = HAL_GPIO_ReadPin(E0_Button_2_GPIO_Port,E0_Button_2_Pin);
-		
-	   	A0_Button_2 = HAL_GPIO_ReadPin(A0_Button_2_GPIO_Port,A0_Button_2_Pin);
-			A1_Button_2 = HAL_GPIO_ReadPin(A1_Button_2_GPIO_Port,A1_Button_2_Pin);
-			A2_Button_2 = HAL_GPIO_ReadPin(A2_Button_2_GPIO_Port,A2_Button_2_Pin);
+void Handle_Button(void){
+	HAL_GPIO_WritePin(E1_1_GPIO_Port,E1_1_Pin,GPIO_PIN_RESET);
+	E0_Button_1 = HAL_GPIO_ReadPin(E0_Button_1_GPIO_Port,E0_Button_1_Pin);
+	HAL_GPIO_WritePin(E1_2_GPIO_Port,E1_2_Pin,GPIO_PIN_RESET);
+	E0_Button_2 = HAL_GPIO_ReadPin(E0_Button_2_GPIO_Port,E0_Button_2_Pin);
+	
+	A0_Button_2 = HAL_GPIO_ReadPin(A0_Button_2_GPIO_Port,A0_Button_2_Pin);
+	A1_Button_2 = HAL_GPIO_ReadPin(A1_Button_2_GPIO_Port,A1_Button_2_Pin);
+	A2_Button_2 = HAL_GPIO_ReadPin(A2_Button_2_GPIO_Port,A2_Button_2_Pin);
 	//	if(E0_Button_1 == 1)
 		
-	   	A0_Button_1 = HAL_GPIO_ReadPin(A0_Button_1_GPIO_Port,A0_Button_1_Pin);
-			A1_Button_1 = HAL_GPIO_ReadPin(A1_Button_1_GPIO_Port,A1_Button_1_Pin);
-			A2_Button_1 = HAL_GPIO_ReadPin(A2_Button_1_GPIO_Port,A2_Button_1_Pin);
-// Doc nut nhan phan 1:
-			if(A2_Button_1 == 0 && A1_Button_1 == 0 && A0_Button_1 == 0 && Sig_Sensor[0] == 1 && E0_Button_1 ==1 && A1 == 0x00 && A01 == 0x00)		A1 = 0x01; // Den 1
-			else if( A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[0] == 1 && E0_Button_1 ==0 && A1 == 0x01) A01 = 0x01;
-			if(A01 == 0x01 && A2_Button_1 == 0 && A1_Button_1 == 0 && A0_Button_1 == 0 && Sig_Sensor[0] == 1 && E0_Button_1 ==1 && A1 == 0x01)  
-			 {
-				 A1 = 0x00;
-				 //A01 = 0x00;
-			 }
-				Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
-//			 
-			if(A2_Button_1 == 0 && A1_Button_1 == 0 && A0_Button_1 == 1 && Sig_Sensor[1] == 1 && A2 == 0x00 && A02 == 0x00 )						
-			{
-				A2 = 0x02; // Den 2	
-				A02 = 0x00;
-			}
-		  if( A2 == 0x02 && A02 == 0x00 &&A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[1] == 1 && E0_Button_1 == 0 )	A02 = 0x02; 
-		  if(A02 == 0x02 && A2 == 0x02 && A2_Button_1 == 0 && A1_Button_1 == 0 && A0_Button_1 == 1 && Sig_Sensor[1] == 1 && E0_Button_1 == 1 )	A2 = 0x00;
-			if(A2==0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[1] == 1 && E0_Button_1 == 0)	A02 = 0x00;
-				Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
-// OK
-			if(A2_Button_1 == 0 && A1_Button_1 == 1 && A0_Button_1 == 0 && Sig_Sensor[2] == 1 && E0_Button_1 ==1 && A3 == 0x00 && A03 ==0x00)		
-			{
-				A3 = 0x04; 
-				A03 = 0x00;// Den 3
-			}
-		  if(A3 == 0x04 && A03 ==0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[2] == 1 && E0_Button_1 ==0)				A03 = 0x04; // biet dc trang thai nha nut nhan
-		  if(A3 == 0x04 && A03 == 0x04 && A2_Button_1 == 0 && A1_Button_1 == 1 && A0_Button_1 == 0 && Sig_Sensor[2] == 1 && E0_Button_1 == 1 ) 	 A3 = 0x00;// nhan lai 1 lan nua
-		  if(A3 == 0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[2] == 1 && E0_Button_1 ==0)	A03 = 0x00; // biet dc trang thai nha nut nhan		 					 		 
-				 Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
-//			
-			if(A2_Button_1 == 0 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[3] == 1 && A4 == 0x00 && A04 == 0x00 )		
-			{
-				A4 = 0x08; // Den 4	
-				A04 = 0x00;
-			}
-			  if(A4 == 0x08 && A04 == 0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[3] == 1 && E0_Button_1 ==0 ) A04 = 0x08;
-			  if(A4==0x08 && A04 == 0x08 && A2_Button_1 == 0 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[3] == 1 && E0_Button_1 == 1 ) A4 = 0x00;
-				if(A4==0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[3] == 1 && E0_Button_1 ==0)	A04 = 0x00;
-				Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
-//		
-			if(A2_Button_1 == 1 && A1_Button_1 == 0 && A0_Button_1 == 0 && Sig_Sensor[4] == 1 && A05== 0x00 && A5 ==0x00)		
-			{	
-					A5 = 0x10; // Den 5
-					A05 = 0x00;
-			}
-			 if(A5 == 0x10 && A05 == 0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[4] == 1 && E0_Button_1 ==0) A05 = 0x10;
-			 if(A5 == 0x10 && A05 == 0x10 && A2_Button_1 == 1 && A1_Button_1 == 0 && A0_Button_1 == 0 && Sig_Sensor[4] == 1 && E0_Button_1 ==1) A5 = 0x00;
-			 if(A5 == 0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[4] == 1 && E0_Button_1 ==0)								A05 = 0x00;
-			 Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
-//			
-			if(A2_Button_1 == 1 && A1_Button_1 == 0 && A0_Button_1 == 1 && Sig_Sensor[5] == 1 && A06 == 0x00 && A6 == 0x00)		
-			{
-				A6 = 0x20; // Den 6
-				A06 = 0x00;
-			}
-		  if(A6 == 0x20 && A06 == 0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[5] == 1 && E0_Button_1 ==0)	A06 = 0x20;
-			if(A06 == 0x20 && A6 == 0x20 && A2_Button_1 == 1 && A1_Button_1 == 0 && A0_Button_1 == 1 && Sig_Sensor[5] == 1 && E0_Button_1 ==1)	A6 = 0x00;
-			if(A6 == 0x20 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[5] == 1 && E0_Button_1 ==0)									A06 = 0x00;
-			Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
-//		
-			if(A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 0 && Sig_Sensor[6] == 1 && A07 == 0x00 && A7 == 0x00)		
-			{
-				A7 = 0x40; // Den 7
-				A07 = 0x00;
-			}
-			 if(A7 == 0x40 && A07 ==0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[6] == 1 && E0_Button_1 == 0) A07 = 0x40;
-			 if(A07 == 0x40 && A7 == 0x40 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 0 && Sig_Sensor[6] == 1 && E0_Button_1 ==1)  A7 = 0x00;
-			 if(A7 == 0x40 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[6] == 1 && E0_Button_1 == 0) 								 A07 = 0x00;
-			 Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
-//		
-			if(A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[7] == 1 && E0_Button_1 ==1 && A08 == 0x00 && A8 == 0x00)		
-			{
-				A8 = 0x80; // Den 8
-				A08 = 0x00;
-			}
-		   if(A8 == 0x80 && A08 == 0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[7] == 1 && E0_Button_1 ==0)     A08 = 0x80;
-			 if(A8 == 0x80 && A08 == 0x80 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[7] == 1 && E0_Button_1 ==0)  	  A8 = 0x00;
-			 if(A8 == 0x80 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[7] == 1 && E0_Button_1 ==0)								  	A08 = 0x00;
-			 Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
-
-// Doc nut nhan phan 2:			
-
-			if(A2_Button_2 == 0 && A1_Button_2 == 1 && A0_Button_2 ==1 && Sig_Sensor[10] == 1 && E0_Button_2 ==1 && A11 == 0x00 && A011 == 0x00)	
-			{
-			A11 = 0x04; // Den 11
-				A011 = 0x00;
-			}
-			if(A11 == 0x04 && A011 == 0x00 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[10] == 1 && E0_Button_2 ==0 ) 	A011 = 0x04;
-		  if(A11 == 0x04 && A011 == 0x04 && A2_Button_2 == 0 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[10] == 1 && E0_Button_2 ==1)	  A11 = 0x00;
-			if(A11 == 0x04 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[10] == 1 && E0_Button_2 ==0) 									A011 = 0x00;
-			Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
-//			
-			if(A2_Button_2 == 0 && A1_Button_2 == 1 && A0_Button_2 == 0 && Sig_Sensor[11] == 1 && A12 == 0x00 && A012 == 0x00)		
-			{
-			A12 = 0x08; // Den 12
-			A012 = 0x00;
-			}
-			if(A12 == 0x08 && A012 == 0x00 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[11] == 1 && E0_Button_2 ==0) A012 = 0x08;
-		  if(A12 == 0x08 && A012 == 0x08 && A2_Button_2 == 0 && A1_Button_2 == 1 && A0_Button_2 == 0 && Sig_Sensor[11] == 1 && E0_Button_2 ==1) A12 = 0x00;
-		  if(A12 == 0x08 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[11] == 1 && E0_Button_2 ==0) 								A012 = 0x00;
-			Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
-//			
-			if(A2_Button_2 == 0 && A1_Button_2 == 0 && A0_Button_2 ==1 && Sig_Sensor[12] == 1 && A13 == 0x00 && A013 == 0x00)	
-			{
-			A13 = 0x10; // Den 13
-			A013 = 0x00;
-			}
-			if(A13 == 0x10 && A013 == 0x00 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[12] == 1 && E0_Button_2 ==0) 	 A013 = 0x10;
-		  if(A13 == 0x10 && A013 == 0x10 && A2_Button_2 == 0 && A1_Button_2 == 0 && A0_Button_2 ==1 && Sig_Sensor[12] == 1  && E0_Button_2 ==1)		 A13 = 0x00;
-		  if(A13 == 0x10 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[12] == 1 && E0_Button_2 ==0) 									 A013 = 0x00;
-			Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
-//			
-			if(A2_Button_2 == 0 && A1_Button_2 == 0 && A0_Button_2 ==0 && Sig_Sensor[13] == 1 && A14 == 0x00 && A013 == 0x00)		
-			{	
-			A14 = 0x20; // Den 14
-			A014 = 0x00;
-			}
-			if(A14 == 0x20 && A014 == 0x00 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[13] == 1 && E0_Button_2 ==0)	A014 = 0x20;
-		  if(A14 == 0x20 && A014 == 0x20 && A2_Button_2 == 0 && A1_Button_2 == 0 && A0_Button_2 == 0 && Sig_Sensor[13] == 1 && E0_Button_2 ==1) A14 =0x00;
-			if(A14 == 0x20 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[13] == 1 && E0_Button_2 ==0) 								A014 = 0x00;
-			Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);		
-//			
-			if(A2_Button_2 == 1 && A1_Button_2 == 0 && A0_Button_2 ==0 && Sig_Sensor[14] == 1 && A15 == 0x00 && A015 == 0x00)		
-			{	
-			A15 = 0x40; // Den 15
-			A015 = 0x00;
-			}
-			if(A15 == 0x40 && A015 == 0x00 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[14] == 1 && E0_Button_2 ==0) 	 A015 = 0x40;
-		  if(A15 == 0x40 && A015 == 0x40 && A2_Button_2 == 1 && A1_Button_2 == 0 && A0_Button_2 == 0 && Sig_Sensor[14] == 1 && E0_Button_2 ==1) 	 A15 = 0x00;
-		  if(A15 == 0x40 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[14] == 1 && E0_Button_2 ==0) 									 A015 = 0x00;
-			Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
-//			
-			if(A2_Button_2 == 1 && A1_Button_2 == 0 && A0_Button_2 ==1 && Sig_Sensor[15] == 1 && A16 == 0x00 && A016 == 0x00 )	 
-			{
-			A16 = 0x80; // Den 16
-			A016 = 0x00;
-			}
-			if(A16 == 0x80 && A016 == 0x00 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[15] == 1 && E0_Button_2 ==0) 	 A016 = 0x80;
-		  if(A16 == 0x80 && A016 == 0x80 && A2_Button_2 == 1 && A1_Button_2 == 0 && A0_Button_2 == 1 && Sig_Sensor[15] == 1 && E0_Button_2 ==1) 	 A16 = 0x00;
-		  if(A16 == 0x80 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[15] == 1 && E0_Button_2 ==0) 									 A016 = 0x00;
-			Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
-//			
-			if(A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 ==0 && Sensor_16 == 1 && A17 == 0x00 && A017 == 0x00)		
-			{
-				A17 = 0x01; // Den 17
-				A017 = 0x00;
-			}
-			if(A17 == 0x01 && A017 == 0x00 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sensor_16 == 1 && E0_Button_2 ==0) 	 A017 = 0x01;
-		  if(A17 == 0x01 && A017 == 0x00 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 0 && Sensor_16 == 1 && E0_Button_2 ==1) 	 A17 = 0x00;
-		  if(A17 == 0x01 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sensor_16 == 1 && E0_Button_2 ==0) 									 A017 = 0x00;
-			Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
-//			
-			if(A2_Button_2 == 1 && A2_Button_2 == 1 && A0_Button_2 ==1 && Sensor_17 == 1 && E0_Button_2 ==1 && A18 == 0x00 && A018 == 0x00)	
-			{
-				A18 = 0x02; // Den 18
-				A018 = 0x00;
-			}
-			if(A18 == 0x02 && A018 == 0x00 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sensor_17 == 1 && E0_Button_2 ==0) 	A018 = 0x02;
-		  if(A18 == 0x02 && A018 == 0x02 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sensor_17 == 1 && E0_Button_2 ==1)	A18 = 0x00;
-		  if(A18 == 0x02 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sensor_17 == 1 && E0_Button_2 ==0) 									A018 = 0x00;
-			Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
+	A0_Button_1 = HAL_GPIO_ReadPin(A0_Button_1_GPIO_Port,A0_Button_1_Pin);
+	A1_Button_1 = HAL_GPIO_ReadPin(A1_Button_1_GPIO_Port,A1_Button_1_Pin);
+	A2_Button_1 = HAL_GPIO_ReadPin(A2_Button_1_GPIO_Port,A2_Button_1_Pin);
+	// Doc nut nhan phan 1:
+	if(A2_Button_1 == 0 && A1_Button_1 == 0 && A0_Button_1 == 0 && Sig_Sensor[0] == 1 && E0_Button_1 ==1 && A1 == 0x00 && A01 == 0x00)A1 = 0x01; // Den 1
+	else if( A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[0] == 1 && E0_Button_1 ==0 && A1 == 0x01) A01 = 0x01;
+	if(A01 == 0x01 && A2_Button_1 == 0 && A1_Button_1 == 0 && A0_Button_1 == 0 && Sig_Sensor[0] == 1 && E0_Button_1 ==1 && A1 == 0x01){
+		A1 = 0x00;
+		//A01 = 0x00;
+	}
+	Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
+	//			 
+	if(A2_Button_1 == 0 && A1_Button_1 == 0 && A0_Button_1 == 1 && Sig_Sensor[1] == 1 && A2 == 0x00 && A02 == 0x00){
+		A2 = 0x02; // Den 2	
+		A02 = 0x00;
+	}
+	if( A2 == 0x02 && A02 == 0x00 &&A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[1] == 1 && E0_Button_1 == 0 )	A02 = 0x02; 
+	if(A02 == 0x02 && A2 == 0x02 && A2_Button_1 == 0 && A1_Button_1 == 0 && A0_Button_1 == 1 && Sig_Sensor[1] == 1 && E0_Button_1 == 1 )	A2 = 0x00;
+	if(A2==0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[1] == 1 && E0_Button_1 == 0)	A02 = 0x00;
+	Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
+	// OK
+	if(A2_Button_1 == 0 && A1_Button_1 == 1 && A0_Button_1 == 0 && Sig_Sensor[2] == 1 && E0_Button_1 ==1 && A3 == 0x00 && A03 ==0x00){
+		A3 = 0x04; 
+		A03 = 0x00;// Den 3
+	}
+	if(A3 == 0x04 && A03 ==0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[2] == 1 && E0_Button_1 ==0)				A03 = 0x04; // biet dc trang thai nha nut nhan
+	if(A3 == 0x04 && A03 == 0x04 && A2_Button_1 == 0 && A1_Button_1 == 1 && A0_Button_1 == 0 && Sig_Sensor[2] == 1 && E0_Button_1 == 1 ) 	 A3 = 0x00;// nhan lai 1 lan nua
+	if(A3 == 0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[2] == 1 && E0_Button_1 ==0)	A03 = 0x00; // biet dc trang thai nha nut nhan		 					 		 
+	Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
+	//			
+	if(A2_Button_1 == 0 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[3] == 1 && A4 == 0x00 && A04 == 0x00){
+		A4 = 0x08; // Den 4	
+		A04 = 0x00;
+	}
+	if(A4 == 0x08 && A04 == 0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[3] == 1 && E0_Button_1 ==0 ) A04 = 0x08;
+	if(A4==0x08 && A04 == 0x08 && A2_Button_1 == 0 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[3] == 1 && E0_Button_1 == 1 ) A4 = 0x00;
+	if(A4==0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[3] == 1 && E0_Button_1 ==0)	A04 = 0x00;
+	Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
+	//		
+	if(A2_Button_1 == 1 && A1_Button_1 == 0 && A0_Button_1 == 0 && Sig_Sensor[4] == 1 && A05== 0x00 && A5 ==0x00){	
+		A5 = 0x10; // Den 5
+		A05 = 0x00;
+	}
+	if(A5 == 0x10 && A05 == 0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[4] == 1 && E0_Button_1 ==0) A05 = 0x10;
+	if(A5 == 0x10 && A05 == 0x10 && A2_Button_1 == 1 && A1_Button_1 == 0 && A0_Button_1 == 0 && Sig_Sensor[4] == 1 && E0_Button_1 ==1) A5 = 0x00;
+	if(A5 == 0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[4] == 1 && E0_Button_1 ==0)								A05 = 0x00;
+	Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
+	//			
+	if(A2_Button_1 == 1 && A1_Button_1 == 0 && A0_Button_1 == 1 && Sig_Sensor[5] == 1 && A06 == 0x00 && A6 == 0x00){
+		A6 = 0x20; // Den 6
+		A06 = 0x00;
+	}
+	if(A6 == 0x20 && A06 == 0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[5] == 1 && E0_Button_1 ==0)	A06 = 0x20;
+	if(A06 == 0x20 && A6 == 0x20 && A2_Button_1 == 1 && A1_Button_1 == 0 && A0_Button_1 == 1 && Sig_Sensor[5] == 1 && E0_Button_1 ==1)	A6 = 0x00;
+	if(A6 == 0x20 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[5] == 1 && E0_Button_1 ==0)									A06 = 0x00;
+	Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
+	//		
+	if(A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 0 && Sig_Sensor[6] == 1 && A07 == 0x00 && A7 == 0x00){
+		A7 = 0x40; // Den 7
+		A07 = 0x00;
+	}
+	if(A7 == 0x40 && A07 ==0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[6] == 1 && E0_Button_1 == 0) A07 = 0x40;
+	if(A07 == 0x40 && A7 == 0x40 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 0 && Sig_Sensor[6] == 1 && E0_Button_1 ==1)  A7 = 0x00;
+	if(A7 == 0x40 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[6] == 1 && E0_Button_1 == 0) A07 = 0x00;
+	Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
+	//		
+	if(A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[7] == 1 && E0_Button_1 ==1 && A08 == 0x00 && A8 == 0x00){
+		A8 = 0x80; // Den 8
+		A08 = 0x00;
+	}
+	if(A8 == 0x80 && A08 == 0x00 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[7] == 1 && E0_Button_1 ==0)     A08 = 0x80;
+	if(A8 == 0x80 && A08 == 0x80 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[7] == 1 && E0_Button_1 ==0)  	  A8 = 0x00;
+	if(A8 == 0x80 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[7] == 1 && E0_Button_1 ==0)								  	A08 = 0x00;
+	Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
+	// Doc nut nhan phan 2:
+	if(A2_Button_2 == 0 && A1_Button_2 == 1 && A0_Button_2 ==1 && Sig_Sensor[10] == 1 && E0_Button_2 ==1 && A11 == 0x00 && A011 == 0x00){
+		A11 = 0x04; // Den 11
+		A011 = 0x00;
+	}
+	if(A11 == 0x04 && A011 == 0x00 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[10] == 1 && E0_Button_2 ==0 ) 	A011 = 0x04;
+	if(A11 == 0x04 && A011 == 0x04 && A2_Button_2 == 0 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[10] == 1 && E0_Button_2 ==1)	  A11 = 0x00;
+	if(A11 == 0x04 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[10] == 1 && E0_Button_2 ==0) 									A011 = 0x00;
+	Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
+	//			
+	if(A2_Button_2 == 0 && A1_Button_2 == 1 && A0_Button_2 == 0 && Sig_Sensor[11] == 1 && A12 == 0x00 && A012 == 0x00){
+		A12 = 0x08; // Den 12
+		A012 = 0x00;
+	}
+	if(A12 == 0x08 && A012 == 0x00 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[11] == 1 && E0_Button_2 ==0) A012 = 0x08;
+	if(A12 == 0x08 && A012 == 0x08 && A2_Button_2 == 0 && A1_Button_2 == 1 && A0_Button_2 == 0 && Sig_Sensor[11] == 1 && E0_Button_2 ==1) A12 = 0x00;
+	if(A12 == 0x08 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[11] == 1 && E0_Button_2 ==0) 								A012 = 0x00;
+	Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
+	//			
+	if(A2_Button_2 == 0 && A1_Button_2 == 0 && A0_Button_2 ==1 && Sig_Sensor[12] == 1 && A13 == 0x00 && A013 == 0x00){
+		A13 = 0x10; // Den 13
+		A013 = 0x00;
+	}
+	if(A13 == 0x10 && A013 == 0x00 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[12] == 1 && E0_Button_2 ==0) 	 A013 = 0x10;
+	if(A13 == 0x10 && A013 == 0x10 && A2_Button_2 == 0 && A1_Button_2 == 0 && A0_Button_2 ==1 && Sig_Sensor[12] == 1  && E0_Button_2 ==1)		 A13 = 0x00;
+	if(A13 == 0x10 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[12] == 1 && E0_Button_2 ==0) 									 A013 = 0x00;
+	Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
+	//			
+	if(A2_Button_2 == 0 && A1_Button_2 == 0 && A0_Button_2 ==0 && Sig_Sensor[13] == 1 && A14 == 0x00 && A013 == 0x00){	
+		A14 = 0x20; // Den 14
+		A014 = 0x00;
+	}
+	if(A14 == 0x20 && A014 == 0x00 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[13] == 1 && E0_Button_2 ==0)	A014 = 0x20;
+	if(A14 == 0x20 && A014 == 0x20 && A2_Button_2 == 0 && A1_Button_2 == 0 && A0_Button_2 == 0 && Sig_Sensor[13] == 1 && E0_Button_2 ==1) A14 =0x00;
+	if(A14 == 0x20 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[13] == 1 && E0_Button_2 ==0) 								A014 = 0x00;
+	Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);		
+	//			
+	if(A2_Button_2 == 1 && A1_Button_2 == 0 && A0_Button_2 ==0 && Sig_Sensor[14] == 1 && A15 == 0x00 && A015 == 0x00){	
+		A15 = 0x40; // Den 15
+		A015 = 0x00;
+	}
+	if(A15 == 0x40 && A015 == 0x00 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[14] == 1 && E0_Button_2 ==0)A015 = 0x40;
+	if(A15 == 0x40 && A015 == 0x40 && A2_Button_2 == 1 && A1_Button_2 == 0 && A0_Button_2 == 0 && Sig_Sensor[14] == 1 && E0_Button_2 ==1)A15 = 0x00;
+	if(A15 == 0x40 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[14] == 1 && E0_Button_2 ==0) A015 = 0x00;
+	Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
+	//			
+	if(A2_Button_2 == 1 && A1_Button_2 == 0 && A0_Button_2 ==1 && Sig_Sensor[15] == 1 && A16 == 0x00 && A016 == 0x00 ){
+		A16 = 0x80; // Den 16
+		A016 = 0x00;
+	}
+	if(A16 == 0x80 && A016 == 0x00 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[15] == 1 && E0_Button_2 ==0) 	 A016 = 0x80;
+	if(A16 == 0x80 && A016 == 0x80 && A2_Button_2 == 1 && A1_Button_2 == 0 && A0_Button_2 == 1 && Sig_Sensor[15] == 1 && E0_Button_2 ==1) 	 A16 = 0x00;
+	if(A16 == 0x80 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sig_Sensor[15] == 1 && E0_Button_2 ==0) 									 A016 = 0x00;
+	Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
+	//			
+	if(A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 ==0 && Sensor_16 == 1 && A17 == 0x00 && A017 == 0x00){
+		A17 = 0x01; // Den 17
+		A017 = 0x00;
+	}
+	if(A17 == 0x01 && A017 == 0x00 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sensor_16 == 1 && E0_Button_2 ==0) 	 A017 = 0x01;
+	if(A17 == 0x01 && A017 == 0x00 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 0 && Sensor_16 == 1 && E0_Button_2 ==1) 	 A17 = 0x00;
+	if(A17 == 0x01 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sensor_16 == 1 && E0_Button_2 ==0) 									 A017 = 0x00;
+	Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
+	//			
+	if(A2_Button_2 == 1 && A2_Button_2 == 1 && A0_Button_2 ==1 && Sensor_17 == 1 && E0_Button_2 ==1 && A18 == 0x00 && A018 == 0x00){
+		A18 = 0x02; // Den 18
+		A018 = 0x00;
+	}
+	if(A18 == 0x02 && A018 == 0x00 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sensor_17 == 1 && E0_Button_2 ==0) 	A018 = 0x02;
+	if(A18 == 0x02 && A018 == 0x02 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sensor_17 == 1 && E0_Button_2 ==1)	A18 = 0x00;
+	if(A18 == 0x02 && A2_Button_2 == 1 && A1_Button_2 == 1 && A0_Button_2 == 1 && Sensor_17 == 1 && E0_Button_2 ==0) 									A018 = 0x00;
+	Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
 		
-Button_8 = HAL_GPIO_ReadPin(Button_8_GPIO_Port,Button_8_Pin); // den 9
-			if(Button_8 == 0 && Sig_Sensor[8] == 1 && A09 == 0 && A9 == 0)
-      {			
-	    A9 = 1;
-			A09 = 0;
-      }
-			if(A9 == 1 && A09 == 0 && Button_8 == 1 && Sig_Sensor[8] == 1)	A09 =1;
-		  if(A9 == 1 && A09 == 1 && Button_8 == 0 && Sig_Sensor[8] == 1)  A9 = 0;
-		  if(A9 == 1 && Button_8 == 1 && Sig_Sensor[8] == 1) 							A09 = 0;
-			HAL_GPIO_WritePin(LED_16_GPIO_Port,LED_16_Pin,A9); 					// de y dau day cho den so 8 (dau ra LED16 vao den so 8)
-Button_9 = HAL_GPIO_ReadPin(Button_9_GPIO_Port,Button_9_Pin); // den 10
-			if(Button_9 == 0 && Sig_Sensor[9] == 1 && A10 == 0 && A010 == 0) 
-			{
-				A10 = 1;
-				A010 = 0;
-			}
-			if(A10 == 1 && A010 == 0 && Button_9 == 1 && Sig_Sensor[9] == 1) A010 = 1;
-		  if(A10 == 1 && A010 == 1 && Button_9 == 0 && Sig_Sensor[9] == 1) A10 = 0;
-		  if(A10 == 1 && Button_9 == 1 && Sig_Sensor[9] == 1) 						 A010 = 0;
-			HAL_GPIO_WritePin(LED_17_GPIO_Port,LED_17_Pin,A10);	// de y dau day cho den so 9 (dau ra LED17 vao den so 9)
-
-		}
+	Button_8 = HAL_GPIO_ReadPin(Button_8_GPIO_Port,Button_8_Pin); // den 9
+	if(Button_8 == 0 && Sig_Sensor[8] == 1 && A09 == 0 && A9 == 0){			
+		A9 = 1;
+		A09 = 0;
+  }
+	if(A9 == 1 && A09 == 0 && Button_8 == 1 && Sig_Sensor[8] == 1)	A09 =1;
+	if(A9 == 1 && A09 == 1 && Button_8 == 0 && Sig_Sensor[8] == 1)  A9 = 0;
+	if(A9 == 1 && Button_8 == 1 && Sig_Sensor[8] == 1) 							A09 = 0;
+	HAL_GPIO_WritePin(LED_16_GPIO_Port,LED_16_Pin,A9); 					// de y dau day cho den so 8 (dau ra LED16 vao den so 8)
+	
+	Button_9 = HAL_GPIO_ReadPin(Button_9_GPIO_Port,Button_9_Pin); // den 10
+	if(Button_9 == 0 && Sig_Sensor[9] == 1 && A10 == 0 && A010 == 0){
+		A10 = 1;
+		A010 = 0;
+	}
+	if(A10 == 1 && A010 == 0 && Button_9 == 1 && Sig_Sensor[9] == 1) A010 = 1;
+	if(A10 == 1 && A010 == 1 && Button_9 == 0 && Sig_Sensor[9] == 1) A10 = 0;
+	if(A10 == 1 && Button_9 == 1 && Sig_Sensor[9] == 1) 						 A010 = 0;
+	HAL_GPIO_WritePin(LED_17_GPIO_Port,LED_17_Pin,A10);	// de y dau day cho den so 9 (dau ra LED17 vao den so 9)
+}
 					
-void Ana_Button_Fire(uint8_t F_A, uint8_t F_B, uint8_t F_C, uint8_t F_D)
-{
+void Ana_Button_Fire(GPIO_PinState F_A, GPIO_PinState F_B, GPIO_PinState F_C, GPIO_PinState F_D){
 	HAL_GPIO_WritePin(S0_Fire_GPIO_Port,S0_Fire_Pin,F_A);
 	HAL_GPIO_WritePin(S1_Fire_GPIO_Port,S1_Fire_Pin,F_B);
 	HAL_GPIO_WritePin(S2_Fire_GPIO_Port,S2_Fire_Pin,F_C);
@@ -414,277 +380,230 @@ void Ana_Button_Fire(uint8_t F_A, uint8_t F_B, uint8_t F_C, uint8_t F_D)
 	*/
 }
 // ====== Cho phep ban ======//
-void Allow_Fire(void)
-{
+void Allow_Fire(void){
 	Mode_F = HAL_GPIO_ReadPin(Mode_Fire_GPIO_Port,Mode_Fire_Pin);
 	Allow_F = HAL_GPIO_ReadPin(Allow_Fire_GPIO_Port,Allow_Fire_Pin);
-	HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
-	if(Allow_F == 1)  Allow_F_Fire = 1;
-	if(Allow_F_Fire == 1 && Mode_F ==0)
-	{
+	DISABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+	
+	if(Allow_F == 1) Allow_F_Fire = 1;
+	if(Allow_F_Fire == 1 && Mode_F ==0){	
+		if(A15 == 0x40){	//15
+			// __HAL_TIM_SetCounter(&htim1,0);
+			ENABLE_Fire_PIN;// HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire((GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)1);
+			A15 = 0x00;
+			Delay_Timer_1s();
+			HAL_Delay(260);
+			DISABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+		}
+		if(A4 == 0x08){   //4
+			ENABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire(0,0,1,0);
+			A4 = 0x00;
+			HAL_Delay(260);
+			DISABLE_Fire_PIN;// HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+		}
+		if(A8 == 0x80){//8
+			ENABLE_Fire_PIN;// HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire(0,0,0,0);
+			A8 = 0x00;
+			HAL_Delay(260);
+			DISABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+		}
+		if(A11 == 0x04){//11
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire(1,0,1,1);
+			A11 = 0x00;
+			HAL_Delay(260);
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+		}
+		if(A3 == 0x04){//3
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire(1,0,1,0);
+			A3 = 0x00;
+			HAL_Delay(260);
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+		}
+		if(A16 == 0x80){//16
+			HAL_GPIO_WritePin(Fire_16_GPIO_Port,Fire_16_Pin,GPIO_PIN_SET);	
+			A16 = 0x00;
+			HAL_Delay(260);
+			HAL_GPIO_WritePin(Fire_16_GPIO_Port,Fire_16_Pin,GPIO_PIN_RESET);
+		}
+		if(A14 == 0x20){//14
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire(0,1,0,1);
+			A14 = 0x00;
+			HAL_Delay(260);
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+		}
+		if(A5 == 0x10){//5
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire(1,1,0,0);
+			A5 = 0x00;
+			HAL_Delay(260);
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+		}
+		if(A2 == 0x02){//2
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire(0,1,1,0);
+			A2 = 0x00;
+			HAL_Delay(260);
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+		}
+		if(A17 == 0x01){//17
+			HAL_GPIO_WritePin(Fire_17_GPIO_Port,Fire_17_Pin,GPIO_PIN_SET);
+			A17 = 0x00;
+			HAL_Delay(260);
+			HAL_GPIO_WritePin(Fire_17_GPIO_Port,Fire_17_Pin,GPIO_PIN_RESET);
+		}
+		if(A9 == 1){//9
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire(1,1,1,1);
+			A9=0x00;
+		  HAL_Delay(260);
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+		}
+		if(A12 == 0x08){//12
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire(0,0,1,1);
+			A12 = 0x00;
+			HAL_Delay(260);
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+	  }
+		if(A7 == 0x40){//7
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire(1,0,0,0);
+			A7 = 0x00;
+			HAL_Delay(260);
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+		}
+		if(A10 == 1){//10
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire(0,1,1,1);	
+			A10=0x00;
+		  HAL_Delay(260);
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+		}
+
+		if(A13 == 0x10){//13
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire(1,1,0,1);
+			A13 = 0x00;
+			HAL_Delay(260);
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+		}
+		if(A6 == 0x20){//6
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire(0,1,0,0);
+			A6 = 0x00;
+			HAL_Delay(260);
+		}
+
+		if(A1 == 0x01){//1
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire(1,1,1,0); 
+			A1 = 0x00;
+			HAL_Delay(260);
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+		}
+
+		if(A18 == 0x02){//18
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire(0,0,0,1);
+			A18 = 0x00;
+			HAL_Delay(260);
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+		}
 		
-
-//15
-				if(A15 == 0x40)
-			{
-				__HAL_TIM_SetCounter(&htim1,0);
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-				Ana_Button_Fire(1,0,0,1);
-				A15 = 0x00;
-				Delay_Timer_1s();
-				HAL_Delay(260);
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
-			}
-//4
-				if(A4 == 0x08)
-			{
-					HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-				Ana_Button_Fire(0,0,1,0);
-				A4 = 0x00;
-				HAL_Delay(260);
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
-			}
-//8
-				if(A8 == 0x80)
-			{
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-				Ana_Button_Fire(0,0,0,0);
-				A8 = 0x00;
-				HAL_Delay(260);
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
-			}
-//11
-				if(A11 == 0x04)
-			{
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-				Ana_Button_Fire(1,0,1,1);
-				A11 = 0x00;
-				HAL_Delay(260);
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
-			}
-//3
-				if(A3 == 0x04)
-			{
-					HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-				Ana_Button_Fire(1,0,1,0);
-				A3 = 0x00;
-				HAL_Delay(260);
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
-			}
-//16
-			if(A16 == 0x80)
-			{
-				HAL_GPIO_WritePin(Fire_16_GPIO_Port,Fire_16_Pin,GPIO_PIN_SET);	
-				A16 = 0x00;
-				HAL_Delay(260);
-				HAL_GPIO_WritePin(Fire_16_GPIO_Port,Fire_16_Pin,GPIO_PIN_RESET);
-			}
-//14
-				if(A14 == 0x20)
-			{
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-				Ana_Button_Fire(0,1,0,1);
-				A14 = 0x00;
-				HAL_Delay(260);
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
-			}
-//5
-				if(A5 == 0x10)
-			{
-					HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-				Ana_Button_Fire(1,1,0,0);
-				A5 = 0x00;
-				HAL_Delay(260);
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
-			}
-//2
-				if(A2 == 0x02)
-			{
-					HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-				Ana_Button_Fire(0,1,1,0);
-				A2 = 0x00;
-				HAL_Delay(260);
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
-			}
-//17
-				if(A17 == 0x01)
-			{
-				HAL_GPIO_WritePin(Fire_17_GPIO_Port,Fire_17_Pin,GPIO_PIN_SET);
-				
-				A17 = 0x00;
-				HAL_Delay(260);
-				HAL_GPIO_WritePin(Fire_17_GPIO_Port,Fire_17_Pin,GPIO_PIN_RESET);
-			}
-//9
-				if(A9 == 1)
-			{
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-				Ana_Button_Fire(1,1,1,1);
-				A9=0x00;
-		    HAL_Delay(260);
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
-			}
-//12
-				if(A12 == 0x08)
-			{
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-				Ana_Button_Fire(0,0,1,1);
-				A12 = 0x00;
-				HAL_Delay(260);
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
-			}
-//7
-				if(A7 == 0x40)
-			{
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-				Ana_Button_Fire(1,0,0,0);
-				A7 = 0x00;
-				HAL_Delay(260);
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
-			}
-//10
-				if(A10 == 1)
-			{
-					HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-				Ana_Button_Fire(0,1,1,1);	
-				A10=0x00;
-		    HAL_Delay(260);
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
-			}
-//13
-			 if(A13 == 0x10)
-			{
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-				Ana_Button_Fire(1,1,0,1);
-				A13 = 0x00;
-				HAL_Delay(260);
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
-			}
-//6
-				if(A6 == 0x20)
-			{
-					HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-				Ana_Button_Fire(0,1,0,0);
-				A6 = 0x00;
-				HAL_Delay(260);
-			}
-//1
-				if(A1 == 0x01)
-			{
-					HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-				Ana_Button_Fire(1,1,1,0); 
-				A1 = 0x00;
-				HAL_Delay(260);
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
-			}
-//18
-			if(A18 == 0x02)
-			{
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-				Ana_Button_Fire(0,0,0,1);
-				A18 = 0x00;
-				HAL_Delay(260);
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
-			}
-
-			
-			Allow_F_Fire = 0;
-			HAL_GPIO_WritePin(LED_17_GPIO_Port,LED_17_Pin,GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LED_16_GPIO_Port,LED_16_Pin,GPIO_PIN_RESET);
-				HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+		Allow_F_Fire = 0;
+		HAL_GPIO_WritePin(LED_17_GPIO_Port,LED_17_Pin,GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(LED_16_GPIO_Port,LED_16_Pin,GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
 		//	HAL_GPIO_WritePin(Fire_17_GPIO_Port,Fire_17_Pin,GPIO_PIN_RESET);
 		//	HAL_GPIO_WritePin(Fire_16_GPIO_Port,Fire_16_Pin,GPIO_PIN_RESET);
-	}
-	
+	}	
 }
 
-void Mode_Fire(void)
-{
-	switch(State)
-	{
-		case IDLE:
-		{
-		if(Mode_F == 0) State = State_1;
-		else if(Mode_F == 1) State = State_2;
+void Mode_Fire(void){
+	switch(State){
+		case IDLE:{
+			if(Mode_F == 0) State = State_1;
+			else if(Mode_F == 1) State = State_2;
+			break;
 		}
-		break;
-		case State_1: // Ban bang tay
-		{
+		case State_1:{ // Ban bang tay
 			Handle_Button();
-		Allow_Fire();
+			Allow_Fire();
 			if(Mode_F == 1) State = State_2;
+			break;
 		}
-		break;
-		case State_2:
+		case State_2:{
 			// ban theo gian do ban'
 		/*
 		17	9		5		2		8		16
 		13	3		11	14	4		12
 		15	7		1		6		10	18
-		*/
-		
-		{
+		*/		
 		Mode_F = HAL_GPIO_ReadPin(Mode_Fire_GPIO_Port,Mode_Fire_Pin);
 		HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
 		Allow_F = HAL_GPIO_ReadPin(Allow_Fire_GPIO_Port,Allow_Fire_Pin);
-	if(Allow_F == 1)  Allow_F_Fire = 1;
-	if(Mode_F == 1 && Allow_F_Fire == 1) 	
-	{		
-		HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-		Ana_Button_Fire(1,0,0,1);//15
-		HAL_Delay(266);
-		Ana_Button_Fire(0,0,1,0);//4
-		HAL_Delay(266);
-		Ana_Button_Fire(0,0,0,0);//8
-    HAL_Delay(266);
-		Ana_Button_Fire(1,0,1,1);//11
-		HAL_Delay(266);
-		Ana_Button_Fire(1,0,1,0);//3
-		HAL_Delay(266);
-		HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
-		HAL_GPIO_WritePin(Fire_16_GPIO_Port,Fire_16_Pin,GPIO_PIN_SET);
-		HAL_Delay(266);
-		HAL_GPIO_WritePin(Fire_16_GPIO_Port,Fire_16_Pin,GPIO_PIN_RESET);
-		//
-		HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-		Ana_Button_Fire(0,1,0,1);//14
-		HAL_Delay(266);
-		Ana_Button_Fire(1,1,0,0); //5
-		HAL_Delay(266);
-		Ana_Button_Fire(0,1,1,0);//2
-		HAL_Delay(266);
-		//
-		HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
-		HAL_GPIO_WritePin(Fire_17_GPIO_Port,Fire_17_Pin,GPIO_PIN_SET);
-		HAL_Delay(266);
-		HAL_GPIO_WritePin(Fire_17_GPIO_Port,Fire_17_Pin,GPIO_PIN_RESET);		
-		//
-		HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-		Ana_Button_Fire(1,1,1,1); //9
-		HAL_Delay(266);
+		if(Allow_F == 1)  Allow_F_Fire = 1;
+		if(Mode_F == 1 && Allow_F_Fire == 1){		
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire(1,0,0,1);//15
+			HAL_Delay(266);
+			Ana_Button_Fire(0,0,1,0);//4
+			HAL_Delay(266);
+			Ana_Button_Fire(0,0,0,0);//8
+			HAL_Delay(266);
+			Ana_Button_Fire(1,0,1,1);//11
+			HAL_Delay(266);
+			Ana_Button_Fire(1,0,1,0);//3
+			HAL_Delay(266);
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+			HAL_GPIO_WritePin(Fire_16_GPIO_Port,Fire_16_Pin,GPIO_PIN_SET);
+			HAL_Delay(266);
+			HAL_GPIO_WritePin(Fire_16_GPIO_Port,Fire_16_Pin,GPIO_PIN_RESET);
+			//
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire(0,1,0,1);//14
+			HAL_Delay(266);
+			Ana_Button_Fire(1,1,0,0); //5
+			HAL_Delay(266);
+			Ana_Button_Fire(0,1,1,0);//2
+			HAL_Delay(266);
+			//
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+			HAL_GPIO_WritePin(Fire_17_GPIO_Port,Fire_17_Pin,GPIO_PIN_SET);
+			HAL_Delay(266);
+			HAL_GPIO_WritePin(Fire_17_GPIO_Port,Fire_17_Pin,GPIO_PIN_RESET);		
+			//
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire(1,1,1,1); //9
+			HAL_Delay(266);
 
-		Ana_Button_Fire(0,0,1,1);//12
-		HAL_Delay(266);
+			Ana_Button_Fire(0,0,1,1);//12
+			HAL_Delay(266);
 			Ana_Button_Fire(1,0,0,0);//7
-		HAL_Delay(266);	
-		Ana_Button_Fire(0,1,1,1); //10
-		HAL_Delay(266);
-		Ana_Button_Fire(1,1,0,1);//13
-		HAL_Delay(266);
-		Ana_Button_Fire(0,1,0,0); //6
-		HAL_Delay(266);
-		Ana_Button_Fire(1,1,1,0); //1
-		HAL_Delay(266);
-		Ana_Button_Fire(0,0,0,1);//18
-		HAL_Delay(266);
-		HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
- 
-	Allow_F_Fire =0;
-	}
-if(Mode_F == 0) State = State_1;
+			HAL_Delay(266);	
+			Ana_Button_Fire(0,1,1,1); //10
+			HAL_Delay(266);
+			Ana_Button_Fire(1,1,0,1);//13
+			HAL_Delay(266);
+			Ana_Button_Fire(0,1,0,0); //6
+			HAL_Delay(266);
+			Ana_Button_Fire(1,1,1,0); //1
+			HAL_Delay(266);
+			Ana_Button_Fire(0,0,0,1);//18
+			HAL_Delay(266);
+			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET); 
+			Allow_F_Fire =0;
+		}
+		if(Mode_F == 0) State = State_1;
 		}
 		break;
-	  }
+	}
 
 }
 // ====== Xu ly xuat tin hieu LED ======//
@@ -708,11 +627,11 @@ void Trans2_Led(uint8_t LED_1,uint8_t LED_2)
 {
 	Handle_Led(LED_1);
 	Handle_Led(LED_2);
-	HAL_GPIO_WritePin(EN__GPIO_Port,EN__Pin,1); HAL_Delay(1);
-	HAL_GPIO_WritePin(EN__GPIO_Port,EN__Pin,0); HAL_Delay(1);	
+	HAL_GPIO_WritePin(EN__GPIO_Port,EN__Pin,(GPIO_PinState)1); HAL_Delay(1);
+	HAL_GPIO_WritePin(EN__GPIO_Port,EN__Pin,(GPIO_PinState)0); HAL_Delay(1);	
 }
 //====== Dieu khien tin hieu cam bien ======//
-void Handle_Sensor(uint8_t S0,uint8_t S1,uint8_t S2,uint8_t S3)
+void Handle_Sensor(GPIO_PinState S0,GPIO_PinState S1,GPIO_PinState S2,GPIO_PinState S3)
 {
 	HAL_GPIO_WritePin(S0_Sensor_GPIO_Port,S0_Sensor_Pin,S0);
 	HAL_GPIO_WritePin(S1_Sensor_GPIO_Port,S1_Sensor_Pin,S1);
@@ -720,60 +639,41 @@ void Handle_Sensor(uint8_t S0,uint8_t S1,uint8_t S2,uint8_t S3)
 	HAL_GPIO_WritePin(S3_Sensor_GPIO_Port,S3_Sensor_Pin,S3);
 }
 //====== Doc tinh hieu bao dan ======//
-void Ana_Sensor(void)
-{
-// 0
-	Handle_Sensor(0,0,0,0);
+void Ana_Sensor(void){
+	Handle_Sensor(0,0,0,0);// 0
 	Sig_Sensor[0]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-// 1
-	Handle_Sensor(1,0,0,0);
+	Handle_Sensor(1,0,0,0);// 1
 	Sig_Sensor[1]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-// 2
-	Handle_Sensor(0,1,0,0);
+	Handle_Sensor(0,1,0,0);// 2
 	Sig_Sensor[2]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-// 3 
-	Handle_Sensor(1,1,0,0);
+	Handle_Sensor(1,1,0,0);// 3 
 	Sig_Sensor[3]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-// 4
-	Handle_Sensor(0,0,1,0);
+	Handle_Sensor(0,0,1,0);// 4
 	Sig_Sensor[4]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-// 5
-	Handle_Sensor(1,0,1,0);
+	Handle_Sensor(1,0,1,0);// 5
 	Sig_Sensor[5]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-// 6
-	Handle_Sensor(0,1,1,0);
+	Handle_Sensor(0,1,1,0);// 6
 	Sig_Sensor[6]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-// 7
-	Handle_Sensor(1,1,1,0);
+	Handle_Sensor(1,1,1,0);// 7
 	Sig_Sensor[7]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-// 8
-	Handle_Sensor(0,0,0,1);
+	Handle_Sensor(0,0,0,1);// 8
 	Sig_Sensor[8]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-// 9
-	Handle_Sensor(1,0,0,1);
+	Handle_Sensor(1,0,0,1);// 9
 	Sig_Sensor[9]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-// 10
-	Handle_Sensor(0,1,0,1);
+	Handle_Sensor(0,1,0,1);// 10
 	Sig_Sensor[10]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-// 11
-	Handle_Sensor(1,1,0,1);
+	Handle_Sensor(1,1,0,1);// 11
 	Sig_Sensor[11]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-// 12
-	Handle_Sensor(0,0,1,1);
+	Handle_Sensor(0,0,1,1);// 12
 	Sig_Sensor[12]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-// 13
-	Handle_Sensor(1,0,1,1);
+	Handle_Sensor(1,0,1,1);// 13
 	Sig_Sensor[13]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-// 14
-	Handle_Sensor(0,1,1,1);
+	Handle_Sensor(0,1,1,1);// 14
 	Sig_Sensor[14]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-// 15
-	Handle_Sensor(1,1,1,1);
+	Handle_Sensor(1,1,1,1);// 15
 	Sig_Sensor[15]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-// 16
-Sensor_16 = HAL_GPIO_ReadPin(Sensor_16_GPIO_Port,Sensor_16_Pin);
-//17
-Sensor_17 = HAL_GPIO_ReadPin(Sensor_17_GPIO_Port,Sensor_17_Pin);
+	Sensor_16 = HAL_GPIO_ReadPin(Sensor_16_GPIO_Port,Sensor_16_Pin);// 16
+	Sensor_17 = HAL_GPIO_ReadPin(Sensor_17_GPIO_Port,Sensor_17_Pin);//17
 }
 
 
@@ -814,24 +714,22 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-HAL_UART_Receive_IT(&huart1,&Rx_Data,1);
-HAL_GPIO_WritePin(DE_485_1_GPIO_Port,DE_485_1_Pin,GPIO_PIN_RESET);
-HAL_ADC_Start_DMA(&hadc1,(uint32_t *)ADC_Out,3);
+	HAL_UART_Receive_IT(&huart1,&Rx_Data,1);
+	HAL_GPIO_WritePin(DE_485_1_GPIO_Port,DE_485_1_Pin,GPIO_PIN_RESET);
+	HAL_ADC_Start_DMA(&hadc1,(uint32_t *)ADC_Out,3);
 	HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
 	HAL_TIM_Base_Start_IT(&htim1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+  while (1){
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-			Ana_Sensor();
-	
+		Ana_Sensor();	
     Mode_Fire();
-	Delay_Timer_1s();
+		Delay_Timer_1s();
 	}
   /* USER CODE END 3 */
 }
@@ -840,8 +738,7 @@ HAL_ADC_Start_DMA(&hadc1,(uint32_t *)ADC_Out,3);
   * @brief System Clock Configuration
   * @retval None
   */
-void SystemClock_Config(void)
-{
+void SystemClock_Config(void){
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
   RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
@@ -853,8 +750,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK){
     Error_Handler();
   }
 
@@ -867,14 +763,12 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
-  {
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK){
     Error_Handler();
   }
   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
   PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV2;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-  {
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK){
     Error_Handler();
   }
 }
@@ -884,8 +778,7 @@ void SystemClock_Config(void)
   * @param None
   * @retval None
   */
-static void MX_ADC1_Init(void)
-{
+static void MX_ADC1_Init(void){
 
   /* USER CODE BEGIN ADC1_Init 0 */
 

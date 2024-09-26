@@ -1,0 +1,27 @@
+--cpu Cortex-M3
+".\out\startup_stm32f103xb.o"
+".\out\main.o"
+".\out\stm32f1xx_it.o"
+".\out\stm32f1xx_hal_msp.o"
+".\out\stm32f1xx_hal_gpio_ex.o"
+".\out\stm32f1xx_hal_adc.o"
+".\out\stm32f1xx_hal_adc_ex.o"
+".\out\stm32f1xx_hal.o"
+".\out\stm32f1xx_hal_rcc.o"
+".\out\stm32f1xx_hal_rcc_ex.o"
+".\out\stm32f1xx_hal_gpio.o"
+".\out\stm32f1xx_hal_dma.o"
+".\out\stm32f1xx_hal_cortex.o"
+".\out\stm32f1xx_hal_pwr.o"
+".\out\stm32f1xx_hal_flash.o"
+".\out\stm32f1xx_hal_flash_ex.o"
+".\out\stm32f1xx_hal_exti.o"
+".\out\stm32f1xx_hal_can.o"
+".\out\stm32f1xx_hal_tim.o"
+".\out\stm32f1xx_hal_tim_ex.o"
+".\out\stm32f1xx_hal_uart.o"
+".\out\system_stm32f1xx.o"
+--nodebug --strict --scatter ".\Out\MACH_DIEU_KHIEN_BAN_WM18.sct"
+--summary_stderr --info summarysizes --map --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list ".\Lst\MACH_DIEU_KHIEN_BAN_WM18.map" -o .\Out\MACH_DIEU_KHIEN_BAN_WM18.axf

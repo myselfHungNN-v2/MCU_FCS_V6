@@ -471,12 +471,11 @@ ARM Macro Assembler    Page 8
               00000400 
               00000200 
               00000000 
-Command Line: --debug --xref --cpu=Cortex-M3 --apcs=interwork --depend=mach_die
-u_khien_ban_wm18\startup_stm32f103xb.d -omach_dieu_khien_ban_wm18\startup_stm32
-f103xb.o -I"J:\__freeLancer\2024_V6_PLab\WM-18VN\engineering\Main Cabin\Firmwar
-e\(zung)_WM18\MCU_FCS_V6\MDK-ARM\RTE" -IC:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.0\CMS
-IS\Include --predefine="__EVAL SETA 1" --list=startup_stm32f103xb.lst startup_s
-tm32f103xb.s
+Command Line: --xref --cpu=Cortex-M3 --apcs=interwork --depend=.\out\startup_st
+m32f103xb.d -o.\out\startup_stm32f103xb.o -I"J:\__freeLancer\2024_V6_PLab\WM-18
+VN\engineering\Main Cabin\Firmware\(zung)_WM18\MCU_FCS_V6\MDK-ARM\RTE" -IC:\Kei
+l_v5\ARM\PACK\ARM\CMSIS\4.1.0\CMSIS\Include --predefine="__EVAL SETA 1" --list=
+.\lst\startup_stm32f103xb.lst startup_stm32f103xb.s
 
 
 

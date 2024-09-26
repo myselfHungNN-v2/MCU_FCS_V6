@@ -22,6 +22,6 @@
 "mach_dieu_khien_ban_wm18\stm32f1xx_hal_uart.o"
 "mach_dieu_khien_ban_wm18\system_stm32f1xx.o"
 --strict --scatter "MACH_DIEU_KHIEN_BAN_WM18\MACH_DIEU_KHIEN_BAN_WM18.sct"
---summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--summary_stderr --info summarysizes --map --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers
 --list "MACH_DIEU_KHIEN_BAN_WM18.map" -o MACH_DIEU_KHIEN_BAN_WM18\MACH_DIEU_KHIEN_BAN_WM18.axf
