@@ -112,6 +112,7 @@ static void MX_CAN_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
+
 /* USER CODE BEGIN PFP */
 void Ana_ADC(GPIO_PinState A, GPIO_PinState B, GPIO_PinState C, GPIO_PinState D);
 void Handle_ADC(void);
@@ -121,6 +122,7 @@ void Handle_Button(void);
 
 void Allow_Fire(void);
 void Mode_Fire(void);
+void Do_Fire(int8_t pipeIdx);  // pipeIdx = 1...18
 void Ana_Button_Fire(GPIO_PinState F_A, GPIO_PinState F_B, GPIO_PinState F_C, GPIO_PinState F_D);
 
 void Trans_Fire(void);
@@ -174,7 +176,52 @@ void Ana_ADC(GPIO_PinState A, GPIO_PinState B, GPIO_PinState C, GPIO_PinState D)
 void Handle_ADC(void){
 		
 }
-//====== Doc tin hieu Nut Nhan ======//
+void Do_Fire(int8_t pipeIdx){  // pipeIdx = 1...18 (default -1)
+	switch (pipeIdx){
+		case 1: // Relay Index 15
+			break;
+		case 2:
+			break;
+		case 3:
+			break;
+		case 4:
+			break;
+		case 5:
+			break;
+		case 6:
+			break;
+		case 7:
+			break;
+		case 8:
+			break;
+		case 9:
+			break;
+		case 10:
+			break;
+		case 11:
+			break;
+		case 12:
+			break;
+		case 13:
+			break;
+		case 14:
+			break;
+		case 15:
+			break;
+		case 16: 
+			break;
+		case 17:
+			break;
+		case 18:
+			break;
+		default: // -1
+			DISABLE_Fire_PIN;
+			HAL_GPIO_WritePin(LED_17_GPIO_Port,LED_17_Pin,GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(LED_16_GPIO_Port,LED_16_Pin,GPIO_PIN_RESET);
+			break;		
+	}
+}
+//====== Doc tin hieu Nut Nhan chong ong phong  và hien thi den ong phong======//
 void Handle_Button(void){
 	HAL_GPIO_WritePin(E1_1_GPIO_Port,E1_1_Pin,GPIO_PIN_RESET);
 	E0_Button_1 = HAL_GPIO_ReadPin(E0_Button_1_GPIO_Port,E0_Button_1_Pin);
@@ -189,7 +236,7 @@ void Handle_Button(void){
 	A0_Button_1 = HAL_GPIO_ReadPin(A0_Button_1_GPIO_Port,A0_Button_1_Pin);
 	A1_Button_1 = HAL_GPIO_ReadPin(A1_Button_1_GPIO_Port,A1_Button_1_Pin);
 	A2_Button_1 = HAL_GPIO_ReadPin(A2_Button_1_GPIO_Port,A2_Button_1_Pin);
-	// Doc nut nhan phan 1:
+	// Doc nut nhan phan 1: (SN74HC148_U3)
 	if(A2_Button_1 == 0 && A1_Button_1 == 0 && A0_Button_1 == 0 && Sig_Sensor[0] == 1 && E0_Button_1 ==1 && A1 == 0x00 && A01 == 0x00)A1 = 0x01; // Den 1
 	else if( A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[0] == 1 && E0_Button_1 ==0 && A1 == 0x01) A01 = 0x01;
 	if(A01 == 0x01 && A2_Button_1 == 0 && A1_Button_1 == 0 && A0_Button_1 == 0 && Sig_Sensor[0] == 1 && E0_Button_1 ==1 && A1 == 0x01){
@@ -260,7 +307,8 @@ void Handle_Button(void){
 	if(A8 == 0x80 && A08 == 0x80 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[7] == 1 && E0_Button_1 ==0)  	  A8 = 0x00;
 	if(A8 == 0x80 && A2_Button_1 == 1 && A1_Button_1 == 1 && A0_Button_1 == 1 && Sig_Sensor[7] == 1 && E0_Button_1 ==0)								  	A08 = 0x00;
 	Trans2_Led(A11|A12|A13|A14|A15|A16|A17|A18,A1|A2|A3|A4|A5|A6|A7|A8);
-	// Doc nut nhan phan 2:
+	
+	// Doc nut nhan phan 2:  (SN74HC148_U4)
 	if(A2_Button_2 == 0 && A1_Button_2 == 1 && A0_Button_2 ==1 && Sig_Sensor[10] == 1 && E0_Button_2 ==1 && A11 == 0x00 && A011 == 0x00){
 		A11 = 0x04; // Den 11
 		A011 = 0x00;
@@ -341,7 +389,7 @@ void Handle_Button(void){
 	if(A9 == 1 && A09 == 0 && Button_8 == 1 && Sig_Sensor[8] == 1)	A09 =1;
 	if(A9 == 1 && A09 == 1 && Button_8 == 0 && Sig_Sensor[8] == 1)  A9 = 0;
 	if(A9 == 1 && Button_8 == 1 && Sig_Sensor[8] == 1) 							A09 = 0;
-	HAL_GPIO_WritePin(LED_16_GPIO_Port,LED_16_Pin,A9); 					// de y dau day cho den so 8 (dau ra LED16 vao den so 8)
+	HAL_GPIO_WritePin(LED_16_GPIO_Port,LED_16_Pin,(GPIO_PinState)A9); 					// de y dau day cho den so 8 (dau ra LED16 vao den so 8)
 	
 	Button_9 = HAL_GPIO_ReadPin(Button_9_GPIO_Port,Button_9_Pin); // den 10
 	if(Button_9 == 0 && Sig_Sensor[9] == 1 && A10 == 0 && A010 == 0){
@@ -351,7 +399,7 @@ void Handle_Button(void){
 	if(A10 == 1 && A010 == 0 && Button_9 == 1 && Sig_Sensor[9] == 1) A010 = 1;
 	if(A10 == 1 && A010 == 1 && Button_9 == 0 && Sig_Sensor[9] == 1) A10 = 0;
 	if(A10 == 1 && Button_9 == 1 && Sig_Sensor[9] == 1) 						 A010 = 0;
-	HAL_GPIO_WritePin(LED_17_GPIO_Port,LED_17_Pin,A10);	// de y dau day cho den so 9 (dau ra LED17 vao den so 9)
+	HAL_GPIO_WritePin(LED_17_GPIO_Port,LED_17_Pin,(GPIO_PinState)A10);	// de y dau day cho den so 9 (dau ra LED17 vao den so 9)
 }
 					
 void Ana_Button_Fire(GPIO_PinState F_A, GPIO_PinState F_B, GPIO_PinState F_C, GPIO_PinState F_D){
@@ -360,14 +408,14 @@ void Ana_Button_Fire(GPIO_PinState F_A, GPIO_PinState F_B, GPIO_PinState F_C, GP
 	HAL_GPIO_WritePin(S2_Fire_GPIO_Port,S2_Fire_Pin,F_C);
 	HAL_GPIO_WritePin(S3_Fire_GPIO_Port,S3_Fire_Pin,F_D);
 	/*
-	0000 : 0  
-	1000 : 1
-	0100 : 2
-	1100 : 3
-	0010 : 4
-	1010 : 5
-	0110 : 6
-	1110 : 7
+	0000 : 0     -- ong phong
+	1000 : 1     -- ong phong
+	0100 : 2     -- ong phong
+	1100 : 3     -- ong phong
+	0010 : 4     -- ong phong
+	1010 : 5     -- ong phong
+	0110 : 6     -- ong phong
+	1110 : 7     -- ong phong
 	
 	0001 : 8
 	1001 : 9
@@ -377,6 +425,8 @@ void Ana_Button_Fire(GPIO_PinState F_A, GPIO_PinState F_B, GPIO_PinState F_C, GP
 	1011 : 13
 	0111 : 14
 	1111 : 15
+	       16 - MCU pin direct
+	       17 - MCU pin direct
 	*/
 }
 // ====== Cho phep ban ======//
@@ -398,122 +448,122 @@ void Allow_Fire(void){
 		}
 		if(A4 == 0x08){   //4
 			ENABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-			Ana_Button_Fire(0,0,1,0);
+			Ana_Button_Fire((GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)0);
 			A4 = 0x00;
 			HAL_Delay(260);
 			DISABLE_Fire_PIN;// HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
 		}
 		if(A8 == 0x80){//8
 			ENABLE_Fire_PIN;// HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-			Ana_Button_Fire(0,0,0,0);
+			Ana_Button_Fire((GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)0);
 			A8 = 0x00;
 			HAL_Delay(260);
 			DISABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
 		}
 		if(A11 == 0x04){//11
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-			Ana_Button_Fire(1,0,1,1);
+			ENABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire((GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)1);
 			A11 = 0x00;
 			HAL_Delay(260);
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+			DISABLE_Fire_PIN; //HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
 		}
 		if(A3 == 0x04){//3
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-			Ana_Button_Fire(1,0,1,0);
+			ENABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire((GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)0);
 			A3 = 0x00;
 			HAL_Delay(260);
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+			DISABLE_Fire_PIN; //HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
 		}
 		if(A16 == 0x80){//16
-			HAL_GPIO_WritePin(Fire_16_GPIO_Port,Fire_16_Pin,GPIO_PIN_SET);	
+			ENABLE_Fire_PIN; //HAL_GPIO_WritePin(Fire_16_GPIO_Port,Fire_16_Pin,GPIO_PIN_SET);	
 			A16 = 0x00;
 			HAL_Delay(260);
-			HAL_GPIO_WritePin(Fire_16_GPIO_Port,Fire_16_Pin,GPIO_PIN_RESET);
+			DISABLE_Fire_PIN; // HAL_GPIO_WritePin(Fire_16_GPIO_Port,Fire_16_Pin,GPIO_PIN_RESET);
 		}
 		if(A14 == 0x20){//14
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-			Ana_Button_Fire(0,1,0,1);
+			ENABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire((GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)1);
 			A14 = 0x00;
 			HAL_Delay(260);
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+			DISABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
 		}
 		if(A5 == 0x10){//5
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-			Ana_Button_Fire(1,1,0,0);
+			ENABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire((GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)0);
 			A5 = 0x00;
 			HAL_Delay(260);
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+			DISABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
 		}
 		if(A2 == 0x02){//2
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-			Ana_Button_Fire(0,1,1,0);
+			ENABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire((GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)0);
 			A2 = 0x00;
 			HAL_Delay(260);
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+			DISABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
 		}
 		if(A17 == 0x01){//17
-			HAL_GPIO_WritePin(Fire_17_GPIO_Port,Fire_17_Pin,GPIO_PIN_SET);
+			ENABLE_Fire_PIN; // HAL_GPIO_WritePin(Fire_17_GPIO_Port,Fire_17_Pin,GPIO_PIN_SET);
 			A17 = 0x00;
 			HAL_Delay(260);
-			HAL_GPIO_WritePin(Fire_17_GPIO_Port,Fire_17_Pin,GPIO_PIN_RESET);
+			DISABLE_Fire_PIN; // HAL_GPIO_WritePin(Fire_17_GPIO_Port,Fire_17_Pin,GPIO_PIN_RESET);
 		}
 		if(A9 == 1){//9
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-			Ana_Button_Fire(1,1,1,1);
+			ENABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire((GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)1);
 			A9=0x00;
 		  HAL_Delay(260);
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+			DISABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
 		}
 		if(A12 == 0x08){//12
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-			Ana_Button_Fire(0,0,1,1);
+			ENABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire((GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)1);
 			A12 = 0x00;
 			HAL_Delay(260);
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+			DISABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
 	  }
 		if(A7 == 0x40){//7
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-			Ana_Button_Fire(1,0,0,0);
+			ENABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire((GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)0);
 			A7 = 0x00;
 			HAL_Delay(260);
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+			DISABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
 		}
 		if(A10 == 1){//10
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-			Ana_Button_Fire(0,1,1,1);	
+			ENABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire((GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)1);	
 			A10=0x00;
 		  HAL_Delay(260);
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+			DISABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
 		}
 
 		if(A13 == 0x10){//13
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-			Ana_Button_Fire(1,1,0,1);
+			ENABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire((GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)1);
 			A13 = 0x00;
 			HAL_Delay(260);
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+			DISABLE_Fire_PIN; //HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
 		}
 		if(A6 == 0x20){//6
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-			Ana_Button_Fire(0,1,0,0);
+			ENABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire((GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)0);
 			A6 = 0x00;
-			HAL_Delay(260);
+			DISABLE_Fire_PIN; // HAL_Delay(260);
 		}
 
 		if(A1 == 0x01){//1
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-			Ana_Button_Fire(1,1,1,0); 
+			ENABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire((GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)0); 
 			A1 = 0x00;
 			HAL_Delay(260);
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+			DISABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
 		}
 
 		if(A18 == 0x02){//18
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-			Ana_Button_Fire(0,0,0,1);
+			ENABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
+			Ana_Button_Fire((GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)1);
 			A18 = 0x00;
 			HAL_Delay(260);
-			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
+			DISABLE_Fire_PIN; // HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
 		}
 		
 		Allow_F_Fire = 0;
@@ -539,11 +589,11 @@ void Mode_Fire(void){
 			break;
 		}
 		case State_2:{
-			// ban theo gian do ban'
+		//Index - (so phong phong - gian do ban) 1(17) - nghia là Index = 1, ông phong so 17
 		/*
-		17	9		5		2		8		16
-		13	3		11	14	4		12
-		15	7		1		6		10	18
+		1(17)		2(9)		3(5)		4(2)		5(8)		6(16)
+		7(13)		8(3)		9(11)		10(14)	11(4)		12(12)
+		13(15)	14(7)		15(1)		16(6)		17(10)	18(18)
 		*/		
 		Mode_F = HAL_GPIO_ReadPin(Mode_Fire_GPIO_Port,Mode_Fire_Pin);
 		HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
@@ -551,15 +601,15 @@ void Mode_Fire(void){
 		if(Allow_F == 1)  Allow_F_Fire = 1;
 		if(Mode_F == 1 && Allow_F_Fire == 1){		
 			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-			Ana_Button_Fire(1,0,0,1);//15
+			Ana_Button_Fire((GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)1);//15
 			HAL_Delay(266);
-			Ana_Button_Fire(0,0,1,0);//4
+			Ana_Button_Fire((GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)0);//4
 			HAL_Delay(266);
-			Ana_Button_Fire(0,0,0,0);//8
+			Ana_Button_Fire((GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)0);//8
 			HAL_Delay(266);
-			Ana_Button_Fire(1,0,1,1);//11
+			Ana_Button_Fire((GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)1);//11
 			HAL_Delay(266);
-			Ana_Button_Fire(1,0,1,0);//3
+			Ana_Button_Fire((GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)0);//3
 			HAL_Delay(266);
 			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
 			HAL_GPIO_WritePin(Fire_16_GPIO_Port,Fire_16_Pin,GPIO_PIN_SET);
@@ -567,11 +617,11 @@ void Mode_Fire(void){
 			HAL_GPIO_WritePin(Fire_16_GPIO_Port,Fire_16_Pin,GPIO_PIN_RESET);
 			//
 			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-			Ana_Button_Fire(0,1,0,1);//14
+			Ana_Button_Fire((GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)1);//14
 			HAL_Delay(266);
-			Ana_Button_Fire(1,1,0,0); //5
+			Ana_Button_Fire((GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)0); //5
 			HAL_Delay(266);
-			Ana_Button_Fire(0,1,1,0);//2
+			Ana_Button_Fire((GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)0);//2
 			HAL_Delay(266);
 			//
 			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET);
@@ -580,22 +630,22 @@ void Mode_Fire(void){
 			HAL_GPIO_WritePin(Fire_17_GPIO_Port,Fire_17_Pin,GPIO_PIN_RESET);		
 			//
 			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_RESET);
-			Ana_Button_Fire(1,1,1,1); //9
+			Ana_Button_Fire((GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)1); //9
 			HAL_Delay(266);
 
-			Ana_Button_Fire(0,0,1,1);//12
+			Ana_Button_Fire((GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)1);//12
 			HAL_Delay(266);
-			Ana_Button_Fire(1,0,0,0);//7
+			Ana_Button_Fire((GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)0);//7
 			HAL_Delay(266);	
-			Ana_Button_Fire(0,1,1,1); //10
+			Ana_Button_Fire((GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)1); //10
 			HAL_Delay(266);
-			Ana_Button_Fire(1,1,0,1);//13
+			Ana_Button_Fire((GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)1);//13
 			HAL_Delay(266);
-			Ana_Button_Fire(0,1,0,0); //6
+			Ana_Button_Fire((GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)0); //6
 			HAL_Delay(266);
-			Ana_Button_Fire(1,1,1,0); //1
+			Ana_Button_Fire((GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)0); //1
 			HAL_Delay(266);
-			Ana_Button_Fire(0,0,0,1);//18
+			Ana_Button_Fire((GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)1);//18
 			HAL_Delay(266);
 			HAL_GPIO_WritePin(InHiBit_Fire_GPIO_Port,InHiBit_Fire_Pin,GPIO_PIN_SET); 
 			Allow_F_Fire =0;
@@ -609,71 +659,129 @@ void Mode_Fire(void){
 // ====== Xu ly xuat tin hieu LED ======//
 void Handle_Led(uint8_t X_Led)
 {
-
-	for(int i =0;i<8;i++)
-	{
-		if((X_Led & 0x80) == 0x80) 	HAL_GPIO_WritePin(DATA_GPIO_Port,DATA_Pin,1);
-		else 												HAL_GPIO_WritePin(DATA_GPIO_Port,DATA_Pin,0);
-		HAL_GPIO_WritePin(CLK__GPIO_Port,CLK__Pin,1); HAL_Delay(1);
-		HAL_GPIO_WritePin(CLK__GPIO_Port,CLK__Pin,0); HAL_Delay(1);
+	for(int i =0;i<8;i++){
+		if((X_Led & 0x80) == 0x80)
+			HAL_GPIO_WritePin(DATA_GPIO_Port,DATA_Pin,GPIO_PIN_SET);
+		else 
+			HAL_GPIO_WritePin(DATA_GPIO_Port,DATA_Pin,GPIO_PIN_RESET);
+		
+		HAL_GPIO_WritePin(CLK__GPIO_Port,CLK__Pin,(GPIO_PinState)1); HAL_Delay(1);
+		HAL_GPIO_WritePin(CLK__GPIO_Port,CLK__Pin,(GPIO_PinState)0); HAL_Delay(1);
 		
 		X_Led = X_Led<<1;
 	}
-
 }
 
 //====== Xuat tin hieu LED ======//
-void Trans2_Led(uint8_t LED_1,uint8_t LED_2)
-{
+void Trans2_Led(uint8_t LED_1,uint8_t LED_2){
 	Handle_Led(LED_1);
 	Handle_Led(LED_2);
-	HAL_GPIO_WritePin(EN__GPIO_Port,EN__Pin,(GPIO_PinState)1); HAL_Delay(1);
-	HAL_GPIO_WritePin(EN__GPIO_Port,EN__Pin,(GPIO_PinState)0); HAL_Delay(1);	
+	HAL_GPIO_WritePin(EN__GPIO_Port,EN__Pin,(GPIO_PinState)1);
+	HAL_Delay(1);
+	HAL_GPIO_WritePin(EN__GPIO_Port,EN__Pin,(GPIO_PinState)0);
+	HAL_Delay(1);	
 }
 //====== Dieu khien tin hieu cam bien ======//
-void Handle_Sensor(GPIO_PinState S0,GPIO_PinState S1,GPIO_PinState S2,GPIO_PinState S3)
-{
+void Handle_Sensor(GPIO_PinState S0,GPIO_PinState S1,GPIO_PinState S2,GPIO_PinState S3){
 	HAL_GPIO_WritePin(S0_Sensor_GPIO_Port,S0_Sensor_Pin,S0);
 	HAL_GPIO_WritePin(S1_Sensor_GPIO_Port,S1_Sensor_Pin,S1);
 	HAL_GPIO_WritePin(S2_Sensor_GPIO_Port,S2_Sensor_Pin,S2);
 	HAL_GPIO_WritePin(S3_Sensor_GPIO_Port,S3_Sensor_Pin,S3);
 }
-//====== Doc tinh hieu bao dan ======//
+//====== Doc tin hieu trang thai dan(rocket) trong ong phong(pipe) ======//
+void SensorSelection(int32_t PipeIdx){ // PipeIdx = 1..18, default = -1 
+	//Index - (so phong phong - gian do ban) 1(17) - nghia là Index = 1, ông phong so 17
+	/*
+		1(17)		2(9)		3(5)		4(2)		5(8)		6(16)
+		7(13)		8(3)		9(11)		10(14)	11(4)		12(12)
+		13(15)	14(7)		15(1)		16(6)		17(10)	18(18)
+	*/
+	switch(PipeIdx){
+		case 1:
+			Handle_Sensor((GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)1);//  1111 - 15
+			break;
+		case 2:
+			Handle_Sensor((GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)0);// 0010 - 4
+			break;
+		case 3:
+			Handle_Sensor((GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)1);// 0001 - 8
+			break;
+		case 4:
+			Handle_Sensor((GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)1);// 1101 - 11
+			break;
+		case 5:
+			Handle_Sensor((GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)0);// 1100 - 3
+			break;
+		case 6:
+			Sensor_16 = HAL_GPIO_ReadPin(Sensor_16_GPIO_Port,Sensor_16_Pin);                   // 16
+			break;
+		case 7:
+			break;
+		case 8:
+			break;
+		case 9:
+			break;
+		case 10:
+			break;
+		case 11:
+			break;
+		case 12: 
+			break;
+		case 13:
+			break;
+		case 14:
+			break;
+		case 15:
+			break;
+		case 16:
+			break;
+		case 17:
+			break;
+		case 18:
+			break;
+		default:
+			break;
+	}
+}
+
 void Ana_Sensor(void){
-	Handle_Sensor(0,0,0,0);// 0
+	/*
+	
+	*/
+	Handle_Sensor((GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)0);// 0
 	Sig_Sensor[0]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-	Handle_Sensor(1,0,0,0);// 1
+	Handle_Sensor((GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)0);// 1
 	Sig_Sensor[1]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-	Handle_Sensor(0,1,0,0);// 2
+	Handle_Sensor((GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)0);// 2
 	Sig_Sensor[2]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-	Handle_Sensor(1,1,0,0);// 3 
+	Handle_Sensor((GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)0);// 3 
 	Sig_Sensor[3]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-	Handle_Sensor(0,0,1,0);// 4
+	Handle_Sensor((GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)0);// 4
 	Sig_Sensor[4]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-	Handle_Sensor(1,0,1,0);// 5
+	Handle_Sensor((GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)0);// 5
 	Sig_Sensor[5]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-	Handle_Sensor(0,1,1,0);// 6
+	Handle_Sensor((GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)0);// 6
 	Sig_Sensor[6]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-	Handle_Sensor(1,1,1,0);// 7
+	Handle_Sensor((GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)0);// 7
 	Sig_Sensor[7]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-	Handle_Sensor(0,0,0,1);// 8
+	Handle_Sensor((GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)1);// 8
 	Sig_Sensor[8]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-	Handle_Sensor(1,0,0,1);// 9
+	Handle_Sensor((GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)1);// 9
 	Sig_Sensor[9]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-	Handle_Sensor(0,1,0,1);// 10
+	Handle_Sensor((GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)1);// 10
 	Sig_Sensor[10]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-	Handle_Sensor(1,1,0,1);// 11
+	Handle_Sensor((GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)1);// 11
 	Sig_Sensor[11]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-	Handle_Sensor(0,0,1,1);// 12
+	Handle_Sensor((GPIO_PinState)0,(GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)1);// 12
 	Sig_Sensor[12]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-	Handle_Sensor(1,0,1,1);// 13
+	Handle_Sensor((GPIO_PinState)1,(GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)1);// 13
 	Sig_Sensor[13]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-	Handle_Sensor(0,1,1,1);// 14
+	Handle_Sensor((GPIO_PinState)0,(GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)1);// 14
 	Sig_Sensor[14]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-	Handle_Sensor(1,1,1,1);// 15
+	Handle_Sensor((GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)1,(GPIO_PinState)1);// 15
 	Sig_Sensor[15]= HAL_GPIO_ReadPin(Sig_Sensor_GPIO_Port,Sig_Sensor_Pin);
-	Sensor_16 = HAL_GPIO_ReadPin(Sensor_16_GPIO_Port,Sensor_16_Pin);// 16
-	Sensor_17 = HAL_GPIO_ReadPin(Sensor_17_GPIO_Port,Sensor_17_Pin);//17
+	Sensor_16 = HAL_GPIO_ReadPin(Sensor_16_GPIO_Port,Sensor_16_Pin);                   // 16
+	Sensor_17 = HAL_GPIO_ReadPin(Sensor_17_GPIO_Port,Sensor_17_Pin);                   //17
 }
 
 
@@ -842,8 +950,7 @@ static void MX_ADC1_Init(void){
   * @param None
   * @retval None
   */
-static void MX_CAN_Init(void)
-{
+static void MX_CAN_Init(void){
 
   /* USER CODE BEGIN CAN_Init 0 */
 
@@ -864,8 +971,7 @@ static void MX_CAN_Init(void)
   hcan.Init.AutoRetransmission = DISABLE;
   hcan.Init.ReceiveFifoLocked = DISABLE;
   hcan.Init.TransmitFifoPriority = DISABLE;
-  if (HAL_CAN_Init(&hcan) != HAL_OK)
-  {
+  if (HAL_CAN_Init(&hcan) != HAL_OK){
     Error_Handler();
   }
   /* USER CODE BEGIN CAN_Init 2 */
@@ -879,8 +985,7 @@ static void MX_CAN_Init(void)
   * @param None
   * @retval None
   */
-static void MX_TIM1_Init(void)
-{
+static void MX_TIM1_Init(void){
 
   /* USER CODE BEGIN TIM1_Init 0 */
 
